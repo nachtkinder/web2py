@@ -106,10 +106,12 @@ def mysql(database_name, username, password, host, port):
                     name = re.sub('`', '', name)
                     if d_type == 'enum':
                         requires =  ', requires=IS_IN_SET(%s)' % options
+                    elif 'NOT NULL' in line:
+                        requires = ', requires=IS_NOT_EMPTY()'
                     else:
                         requires = ''
                     field_type = data_type_map[d_type]
-                    web2py_table_code += "\n    Field('%s','%s'%s)," % (
+                    web2py_table_code += "\n    Field('%s', '%s'%s)," % (
                         name, field_type, requires)
             web2py_table_code = "legacy_db.define_table('%s', %s\n    migrate=False)" % (table_name, web2py_table_code)
             legacy_db_table_web2py_code.append(web2py_table_code)
