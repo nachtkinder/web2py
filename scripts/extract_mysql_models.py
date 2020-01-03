@@ -98,10 +98,10 @@ def mysql(database_name, username, password, host, port):
 
             fields = []
             for line in sql_lines[1:-1]:
-                if re.search('KEY', line) or re.search('PRIMARY', line) or re.search(' ID', line) or line.startswith(')'):
+                if ('KEY' in line) or ('PRIMARY' in line) or (' ID' in line) or line.startswith(')'):
                     continue
                 hit = re.search(r'(?P<name>\S+)\s+(?P<type>\S+?)(?P<options>\([^)]+\))?(,| )( .*)?', line)
-                if hit is not None:
+                if hit:
                     name, d_type, options = hit.group('name'), hit.group('type'), hit.group('options')
                     name = re.sub('`', '', name)
                     if d_type == 'enum':
