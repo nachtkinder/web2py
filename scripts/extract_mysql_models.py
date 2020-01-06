@@ -100,20 +100,28 @@ def mysql(database_name, username, password, host, port):
             for line in sql_lines[1:-1]:
                 if ('KEY' in line) or ('PRIMARY' in line) or (' ID' in line) or line.startswith(')'):
                     continue
-                hit = re.search(r'(?P<name>\S+)\s+(?P<type>\S+?)(?P<options>\([^)]+\))?(,| )( .*)?', line)
+                hit = re.search(r'(?P<name>\S+)\s+(?P<type>\S+?)(\((?P<options>[^)]+)\))?(,| )( .*)?', line)
                 if hit:
                     name, d_type, options = hit.group('name'), hit.group('type'), hit.group('options')
                     name = re.sub('`', '', name)
                     if d_type == 'enum':
-                        requires =  ', requires=IS_IN_SET(%s)' % options
+                        requires =  ', requires=IS_IN_SET((%s))' % options
                     elif 'NOT NULL' in line:
                         requires = ', requires=IS_NOT_EMPTY()'
                     else:
                         requires = ''
                     field_type = data_type_map[d_type]
-                    web2py_table_code += "\n    Field('%s', '%s'%s)," % (
-                        name, field_type, requires)
-            web2py_table_code = "legacy_db.define_table('%s', %s\n    migrate=False)" % (table_name, web2py_table_code)
+                    if field_type == 'string':
+                        try:
+                            length = ', length=%d' % int(options)
+                        except ValueError:
+                            length = ''
+                    else:
+                        length = ''
+
+                    web2py_table_code += "\n    Field('%s', '%s'%s%s)," % (
+                        name, field_type, requires, length)
+            web2py_table_code = "legacy_db.define_table('%s',%s\n    migrate=False)" % (table_name, web2py_table_code)
             legacy_db_table_web2py_code.append(web2py_table_code)
     #----------------------------------------
     #write the legacy db to file
